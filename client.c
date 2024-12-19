@@ -10,7 +10,7 @@
 int main() {
     int sock;
     struct sockaddr_in serv_addr;
-    char buffer[BUFFER_SIZE] = {0};
+    char buffer[BUFFER_SIZE] = { 0 };
     char input[BUFFER_SIZE];
 
     // Create socket
@@ -27,7 +27,7 @@ int main() {
         return -1;
     }
 
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+    if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("Connection failed");
         return -1;
     }
@@ -41,26 +41,28 @@ int main() {
         printf("%s", buffer);
     }
 
-    // Send order to server
-    printf("Enter your order: ");
-    fgets(input, BUFFER_SIZE, stdin);
-    input[strcspn(input, "\n")] = '\0';
-    send(sock, input, strlen(input), 0);
+    // Order loop
+    while (1) {
+        printf("Enter your order (item,quantity) or 'done' to finish: ");
+        fgets(input, BUFFER_SIZE, stdin);
+        input[strcspn(input, "\n")] = '\0';
 
-    // Receive price and confirmation request
-    valread = read(sock, buffer, BUFFER_SIZE);
-    if (valread > 0) {
-        buffer[valread] = '\0';
-        printf("%s", buffer);
+        // Send order to server
+        send(sock, input, strlen(input), 0);
+
+        if (strcmp(input, "done") == 0) {
+            break;
+        }
+
+        // Receive response from server
+        valread = read(sock, buffer, BUFFER_SIZE);
+        if (valread > 0) {
+            buffer[valread] = '\0';
+            printf("%s", buffer);
+        }
     }
 
-    // Send confirmation or cancellation
-    printf("Enter your response (OK or Cancel): ");
-    fgets(input, BUFFER_SIZE, stdin);
-    input[strcspn(input, "\n")] = '\0';
-    send(sock, input, strlen(input), 0);
-
-    // Receive final message
+    // Receive final response with total details
     valread = read(sock, buffer, BUFFER_SIZE);
     if (valread > 0) {
         buffer[valread] = '\0';
